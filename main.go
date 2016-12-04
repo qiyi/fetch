@@ -103,8 +103,9 @@ func action(ctx *cli.Context) error {
 		if !ctx.Bool("head") {
 			fmt.Print(rsp)
 		}
+		return nil
 	}
-	return nil
+	return err
 }
 
 func main() {
