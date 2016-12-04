@@ -116,7 +116,7 @@ options:
 
 	fetch := &cli.App{
 		Name:    "fetch",
-		Version: "0.0.1",
+		Version: "0.0.2",
 		Authors: []*cli.Author{
 			&cli.Author{Name: "qiyi", Email: "bphanzhu@gmail.com"}},
 		Description: "URL fetch application",
