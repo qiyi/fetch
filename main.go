@@ -88,6 +88,8 @@ func action(ctx *cli.Context) error {
 		rsp, err = grequests.Patch(url, ro)
 	case "DELETE":
 		rsp, err = grequests.Delete(url, ro)
+	default:
+		return errors.New("Unsupported COMMAND")
 	}
 	if err == nil {
 		if ctx.Bool("include") || ctx.Bool("head") {
