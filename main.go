@@ -39,7 +39,21 @@ func action(ctx *cli.Context) error {
 
 	data := ctx.String("data")
 	if len(data) > 0 {
-		ro.RequestBody = bytes.NewReader([]byte(data))
+		if data[:1] == "@" {
+			dataFile := data[1:]
+			if _, err := os.Stat(dataFile); os.IsNotExist(err) {
+				fmt.Println("Warning: Couldn't read data from file \"" +
+					dataFile + "\", this makes an empty POST.")
+			} else {
+				fileReader, err := os.Open(dataFile)
+				if err != nil {
+					return err
+				}
+				ro.RequestBody = fileReader
+			}
+		} else {
+			ro.RequestBody = bytes.NewReader([]byte(data))
+		}
 	}
 
 	method := ctx.String("request")
