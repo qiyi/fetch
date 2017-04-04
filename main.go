@@ -37,6 +37,33 @@ func action(ctx *cli.Context) error {
 		}
 	}
 
+	parts := ctx.StringSlice("form")
+	if len(parts) > 0 {
+		for _, part := range parts {
+			kv := strings.Split(part, "=")
+			if len(kv) != 2 {
+				return errors.New("Warning: Illegally formatted input field!")
+			}
+			if len(kv[1]) > 0 && kv[1][:1] == "@" {
+				fileName := kv[1][1:]
+				fd, err := os.Open(fileName)
+				if err != nil {
+					return err
+				}
+				ro.Files = append(ro.Files, grequests.FileUpload{
+					FileName:     fileName,
+					FileContents: fd,
+					FieldName:    kv[0],
+				})
+			} else {
+				if ro.Data == nil {
+					ro.Data = make(map[string]string, 0)
+				}
+				ro.Data[kv[0]] = kv[1]
+			}
+		}
+	}
+
 	data := ctx.String("data")
 	if len(data) > 0 {
 		if data[:1] == "@" {
@@ -60,7 +87,8 @@ func action(ctx *cli.Context) error {
 	if !ctx.IsSet("request") && ctx.IsSet("head") {
 		method = "HEAD"
 	}
-	if !ctx.IsSet("request") && ctx.IsSet("data") {
+	if !ctx.IsSet("request") &&
+		(ctx.IsSet("data") || ctx.IsSet("form")) {
 		method = "POST"
 	}
 
@@ -68,7 +96,7 @@ func action(ctx *cli.Context) error {
 		if ro.Headers == nil {
 			ro.Headers = make(map[string]string, 0)
 		}
-		if _, ok := ro.Headers["Content-Type"]; !ok {
+		if _, ok := ro.Headers["Content-Type"]; !ok && len(ro.Files) == 0 {
 			ro.Headers["Content-Type"] = "application/x-www-form-urlencoded"
 		}
 	}
@@ -131,7 +159,7 @@ options:
 
 	fetch := &cli.App{
 		Name:    "fetch",
-		Version: "0.0.2",
+		Version: "0.0.3",
 		Authors: []*cli.Author{
 			&cli.Author{Name: "qiyi", Email: "bphanzhu@gmail.com"}},
 		Description: "URL fetch application",
@@ -142,6 +170,11 @@ options:
 			Name:    "data",
 			Aliases: []string{"d"},
 			Usage:   "HTTP POST `DATA`",
+		},
+		&cli.StringSliceFlag{
+			Name:    "form",
+			Aliases: []string{"F"},
+			Usage:   "Specify HTTP multipart POST `DATA`",
 		},
 		&cli.StringSliceFlag{
 			Name:    "header",
